@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>99 Nights in the Forest</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
   <!-- Login Screen -->
   <div id="login-screen">
@@ -17,8 +19,7 @@
       </div>
 
       <div class="login-form">
-        <input type="text" id="username-input" placeholder="Enter your username..."
-               maxlength="16" autocomplete="off">
+        <input type="text" id="username-input" placeholder="Enter your username..." maxlength="16" autocomplete="off">
         <button id="play-btn" onclick="startGame()">
           ▶ ENTER THE FOREST
         </button>
@@ -200,8 +201,7 @@
     <div class="chat-container" id="chat-container">
       <div class="chat-messages" id="chat-messages"></div>
       <div class="chat-input-container" id="chat-input-container" style="display:none;">
-        <input type="text" id="chat-input" placeholder="Type a message..."
-               maxlength="200" autocomplete="off">
+        <input type="text" id="chat-input" placeholder="Type a message..." maxlength="200" autocomplete="off">
       </div>
     </div>
 
@@ -216,6 +216,49 @@
     <!-- Score -->
     <div class="score-display">
       Score: <span id="score-value">0</span>
+    </div>
+    <!-- Coin display -->
+    <div class="coin-display" id="coin-display">🪙 0</div>
+
+    <!-- Weapon display -->
+    <div class="weapon-display" id="weapon-display">👊 Fists | Ammo: ∞</div>
+
+    <!-- Build indicator -->
+    <div class="build-indicator" id="build-indicator" style="display:none;">
+      🏠 BUILD MODE (B to toggle)
+    </div>
+
+    <!-- Build menu -->
+    <div class="build-menu" id="build-menu" style="display:none;">
+      <h4>🏠 BUILD</h4>
+      <button onclick="game.selectBuild('wood_wall')">🧱 Wall (3 wood)</button>
+      <button onclick="game.selectBuild('wood_floor')">🟫 Floor (2 wood)</button>
+      <button onclick="game.selectBuild('wood_door')">🚪 Door (4 wood)</button>
+      <button onclick="game.selectBuild('spike_trap')">⚔️ Spike Trap (6 wood)</button>
+      <button onclick="game.selectBuild('campfire_build')">🔥 Campfire (5 wood)</button>
+    </div>
+
+    <!-- Shop panel -->
+    <div class="shop-panel" id="shop-panel" style="display:none;">
+      <div class="shop-content"></div>
+    </div>
+
+    <!-- Leaderboard panel -->
+    <div class="leaderboard-panel" id="leaderboard-panel" style="display:none;">
+      <div class="lb-content"></div>
+    </div>
+
+    <!-- Voice chat -->
+    <div class="voice-controls">
+      <button class="voice-btn" id="voice-btn" onclick="game.toggleVoice()">🎤 Voice OFF</button>
+      <button class="voice-mute-btn" id="voice-mute-btn" onclick="game.toggleMute()">🔇</button>
+      <span class="voice-count" id="voice-count" style="display:none;"></span>
+      <span class="voice-error" id="voice-error" style="display:none;"></span>
+    </div>
+
+    <!-- Boss warning -->
+    <div class="boss-warning" id="boss-warning" style="display:none;">
+      ⚠️ BOSS APPROACHING ⚠️
     </div>
   </div>
 
@@ -269,5 +312,12 @@
       }
     }
   </script>
+  <script src="js/game/BuildSystem.js"></script>
+  <script src="js/game/WeaponSystem.js"></script>
+  <script src="js/game/Shop.js"></script>
+  <script src="js/game/Leaderboard.js"></script>
+  <script src="js/game/TouchControls.js"></script>
+  <script src="js/game/VoiceChat.js"></script>
 </body>
+
 </html>

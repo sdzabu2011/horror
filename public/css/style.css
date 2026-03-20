@@ -781,3 +781,283 @@ body.in-menu { cursor: default; }
   .chat-container { width: 250px; }
   .player-list { width: 130px; }
 }
+/* =================== NEW FEATURES STYLES =================== */
+
+/* Coins */
+.coin-display {
+  position: absolute;
+  top: 15px;
+  right: 150px;
+  font-size: 16px;
+  color: #ffd700;
+  background: rgba(0,0,0,0.6);
+  padding: 5px 12px;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+/* Weapon */
+.weapon-display {
+  position: absolute;
+  bottom: 85px;
+  right: 20px;
+  font-size: 13px;
+  color: #fff;
+  background: rgba(0,0,0,0.6);
+  padding: 5px 12px;
+  border-radius: 4px;
+}
+
+/* Build */
+.build-indicator {
+  position: absolute;
+  bottom: 120px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #00ff44;
+  font-size: 16px;
+  background: rgba(0,0,0,0.7);
+  padding: 8px 20px;
+  border-radius: 4px;
+  border: 1px solid #00ff44;
+}
+
+.build-menu {
+  position: absolute;
+  bottom: 150px;
+  left: 20px;
+  background: rgba(0,0,0,0.85);
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(0,255,68,0.3);
+  width: 200px;
+}
+
+.build-menu h4 { color: #00ff44; margin-bottom: 8px; }
+
+.build-menu button {
+  display: block;
+  width: 100%;
+  padding: 6px 10px;
+  margin: 4px 0;
+  background: rgba(0,255,68,0.1);
+  border: 1px solid rgba(0,255,68,0.3);
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  text-align: left;
+}
+
+.build-menu button:hover { background: rgba(0,255,68,0.2); }
+
+/* Shop */
+.shop-panel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 450px;
+  max-height: 70vh;
+  background: rgba(0,0,0,0.95);
+  border: 2px solid #ffd700;
+  border-radius: 12px;
+  overflow-y: auto;
+  z-index: 300;
+}
+
+.shop-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 15px;
+  background: rgba(255,215,0,0.1);
+  border-bottom: 1px solid rgba(255,215,0,0.3);
+}
+
+.shop-header h3 { color: #ffd700; }
+.shop-coins { color: #ffd700; font-weight: bold; }
+.shop-close { background: none; border: none; color: #ff4444; font-size: 20px; cursor: pointer; }
+
+.shop-category { padding: 10px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.shop-category h4 { color: #888; font-size: 11px; margin-bottom: 6px; letter-spacing: 2px; }
+
+.shop-item {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  margin: 4px 0;
+  background: rgba(255,255,255,0.03);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.shop-item:hover { background: rgba(255,215,0,0.1); }
+.shop-item.cant-afford { opacity: 0.4; }
+.shop-item-icon { font-size: 20px; margin-right: 10px; }
+.shop-item-info { flex: 1; }
+.shop-item-name { display: block; font-size: 13px; color: #fff; }
+.shop-item-desc { display: block; font-size: 10px; color: #666; }
+.shop-item-price { color: #ffd700; font-weight: bold; font-size: 13px; }
+
+/* Leaderboard */
+.leaderboard-panel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;
+  max-height: 60vh;
+  background: rgba(0,0,0,0.95);
+  border: 2px solid #00ff44;
+  border-radius: 12px;
+  overflow-y: auto;
+  z-index: 300;
+}
+
+.lb-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 15px;
+  background: rgba(0,255,68,0.1);
+}
+
+.lb-header h3 { color: #00ff44; }
+.lb-close { background: none; border: none; color: #ff4444; font-size: 20px; cursor: pointer; }
+.lb-list { padding: 10px; }
+.lb-empty { color: #666; text-align: center; padding: 20px; font-size: 14px; }
+
+.lb-entry {
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  gap: 10px;
+}
+
+.lb-top { background: rgba(255,215,0,0.05); }
+.lb-rank { font-size: 16px; min-width: 30px; }
+.lb-name { flex: 1; color: #fff; font-size: 14px; }
+.lb-score { color: #ffd700; font-weight: bold; }
+.lb-details { color: #666; font-size: 10px; }
+
+/* Voice */
+.voice-controls {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.voice-btn {
+  padding: 6px 12px;
+  background: rgba(0,0,0,0.7);
+  border: 1px solid #666;
+  color: #666;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.voice-btn.active { border-color: #00ff44; color: #00ff44; }
+.voice-btn.muted { border-color: #ff4444; color: #ff4444; }
+.voice-mute-btn { padding: 6px 8px; background: rgba(0,0,0,0.7); border: 1px solid #666; color: #fff; border-radius: 4px; cursor: pointer; }
+.voice-count { color: #888; font-size: 10px; }
+.voice-error { color: #ff4444; font-size: 10px; }
+
+/* Boss warning */
+.boss-warning {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 32px;
+  color: #ff0000;
+  text-shadow: 0 0 20px #ff0000;
+  animation: bossFlash 0.5s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 200;
+}
+
+@keyframes bossFlash { from { opacity: 0.5; } to { opacity: 1; } }
+
+/* Mobile touch controls */
+.touch-joystick-area {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 40%;
+  height: 50%;
+  z-index: 400;
+}
+
+.joystick-base {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  border: 2px solid rgba(255,255,255,0.3);
+  left: 50px;
+  bottom: 80px;
+  opacity: 0.5;
+}
+
+.joystick-stick {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(0,255,68,0.5);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin: -20px 0 0 -20px;
+  transition: transform 0.05s;
+}
+
+.touch-look-area {
+  position: fixed;
+  right: 0;
+  top: 0;
+  width: 60%;
+  height: 60%;
+  z-index: 350;
+}
+
+.touch-actions {
+  position: fixed;
+  right: 10px;
+  bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 180px;
+  justify-content: flex-end;
+  z-index: 400;
+}
+
+.touch-btn {
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.6);
+  border: 2px solid rgba(255,255,255,0.3);
+  color: #fff;
+  font-size: 22px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.touch-btn:active { background: rgba(0,255,68,0.3); border-color: #00ff44; }
+
+body:not(.mobile-mode) .touch-joystick-area,
+body:not(.mobile-mode) .touch-actions,
+body:not(.mobile-mode) .touch-look-area { display: none; }
