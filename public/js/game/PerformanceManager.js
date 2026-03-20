@@ -1,674 +1,344 @@
-// =============================================
-// PERFORMANCE MANAGER - Fixes all lag issues
-// Auto-patches the game, no other files need changes
-// =============================================
-
 (function () {
 
-  const PERF_CONFIG = {
-    // Draw distance - objects beyond this are hidden
-    drawDistance: 80,
+  function fix() {
+    if (!window.game || !window.game.scene || !window.game.isRunning) return;
 
-    // Max visible trees at once
-    maxVisibleTrees: 150,
+    var g = window.game;
+    var scene = g.scene;
+    var renderer = g.renderer;
 
-    // Max visible rocks at once
-    maxVisibleRocks: 40,
+    console.log('🔧 PERFORMANCE FIX STARTING...');
 
-    // Max visible fog particles
-    maxVisibleFog: 15,
+    // ==============================
+    // 1. REDUCE PIXEL RATIO
+    // ==============================
+    renderer.setPixelRatio(1);
 
-    // Shadow map size (lower = faster)
-    shadowMapSize: 512,
+    // ==============================
+    // 2. DISABLE ALL SHADOWS
+    // ==============================
+    renderer.shadowMap.enabled = false;
 
-    // Max pixel ratio (lower = faster)
-    maxPixelRatio: 1,
+    scene.traverse(function (obj) {
+      if (obj.castShadow) obj.castShadow = false;
+      if (obj.receiveShadow) obj.receiveShadow = false;
+    });
 
-    // Max lights active at once
-    maxActiveLights: 8,
+    // ==============================
+    // 3. REMOVE 80% OF TREES
+    // ==============================
+    if (g.forest && g.forest.trees) {
+      var trees = g.forest.trees;
+      var keep = Math.min(trees.length, 150);
+      var removeCount = 0;
 
-    // How often to update visibility (ms)
-    cullInterval: 500,
+      // Keep only nearest 150 trees to center
+      trees.sort(function (a, b) {
+        var da = a.position.x * a.position.x + a.position.z * a.position.z;
+        var db = b.position.x * b.position.x + b.position.z * b.position.z;
+        return da - db;
+      });
 
-    // Reduce monster update rate
-    monsterUpdateInterval: 200,
-
-    // Network send rate (ms)
-    networkSendRate: 80,
-
-    // Enable frustum culling
-    frustumCulling: true,
-
-    // Disable shadows on small objects
-    smallObjectShadows: false,
-
-    // Reduce fog particles
-    reduceFog: true,
-
-    // Auto quality detection
-    autoQuality: true
-  };
-
-  // ==========================================
-  // FPS Counter for auto quality adjustment
-  // ==========================================
-  let frameCount = 0;
-  let lastFpsTime = Date.now();
-  let currentFps = 60;
-  let qualityLevel = 'medium'; // low, medium, high
-
-  function measureFps() {
-    frameCount++;
-    const now = Date.now();
-    if (now - lastFpsTime >= 1000) {
-      currentFps = frameCount;
-      frameCount = 0;
-      lastFpsTime = now;
-
-      // Auto adjust quality
-      if (PERF_CONFIG.autoQuality) {
-        if (currentFps < 20 && qualityLevel !== 'low') {
-          setQuality('low');
-        } else if (currentFps < 35 && qualityLevel === 'high') {
-          setQuality('medium');
-        } else if (currentFps > 50 && qualityLevel === 'low') {
-          setQuality('medium');
-        }
-      }
-
-      // Update FPS display
-      const fpsEl = document.getElementById('fps-counter');
-      if (fpsEl) {
-        fpsEl.textContent = `FPS: ${currentFps}`;
-        fpsEl.style.color = currentFps > 40 ? '#00ff44' : currentFps > 25 ? '#ffaa00' : '#ff4444';
-      }
-    }
-  }
-
-  function setQuality(level) {
-    qualityLevel = level;
-    console.log(`🎮 Quality set to: ${level}`);
-
-    switch (level) {
-      case 'low':
-        PERF_CONFIG.drawDistance = 50;
-        PERF_CONFIG.maxVisibleTrees = 80;
-        PERF_CONFIG.maxVisibleRocks = 20;
-        PERF_CONFIG.maxVisibleFog = 5;
-        PERF_CONFIG.shadowMapSize = 256;
-        PERF_CONFIG.maxPixelRatio = 0.75;
-        PERF_CONFIG.maxActiveLights = 4;
-        PERF_CONFIG.smallObjectShadows = false;
-        break;
-
-      case 'medium':
-        PERF_CONFIG.drawDistance = 80;
-        PERF_CONFIG.maxVisibleTrees = 150;
-        PERF_CONFIG.maxVisibleRocks = 40;
-        PERF_CONFIG.maxVisibleFog = 15;
-        PERF_CONFIG.shadowMapSize = 512;
-        PERF_CONFIG.maxPixelRatio = 1;
-        PERF_CONFIG.maxActiveLights = 8;
-        PERF_CONFIG.smallObjectShadows = false;
-        break;
-
-      case 'high':
-        PERF_CONFIG.drawDistance = 120;
-        PERF_CONFIG.maxVisibleTrees = 300;
-        PERF_CONFIG.maxVisibleRocks = 80;
-        PERF_CONFIG.maxVisibleFog = 30;
-        PERF_CONFIG.shadowMapSize = 1024;
-        PERF_CONFIG.maxPixelRatio = 1.5;
-        PERF_CONFIG.maxActiveLights = 16;
-        PERF_CONFIG.smallObjectShadows = true;
-        break;
-    }
-
-    applyRendererSettings();
-  }
-
-  // ==========================================
-  // Apply renderer optimizations
-  // ==========================================
-  function applyRendererSettings() {
-    if (!window.game || !window.game.renderer) return;
-
-    const renderer = window.game.renderer;
-
-    // Reduce pixel ratio
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, PERF_CONFIG.maxPixelRatio));
-
-    // Optimize shadow maps
-    if (renderer.shadowMap) {
-      renderer.shadowMap.autoUpdate = false;
-      renderer.shadowMap.needsUpdate = true;
-    }
-
-    // Reduce tone mapping exposure for performance
-    renderer.powerPreference = 'high-performance';
-  }
-
-  // ==========================================
-  // Distance-based visibility culling
-  // ==========================================
-  let lastCullTime = 0;
-
-  function cullObjects(camera) {
-    const now = Date.now();
-    if (now - lastCullTime < PERF_CONFIG.cullInterval) return;
-    lastCullTime = now;
-
-    if (!window.game || !window.game.forest) return;
-
-    const camPos = camera.position;
-    const drawDist = PERF_CONFIG.drawDistance;
-    const drawDistSq = drawDist * drawDist;
-
-    // Cull trees
-    const forest = window.game.forest;
-    if (forest.trees && forest.trees.length > 0) {
-      let visibleTrees = 0;
-
-      for (let i = 0; i < forest.trees.length; i++) {
-        const tree = forest.trees[i];
-        if (!tree) continue;
-
-        const dx = tree.position.x - camPos.x;
-        const dz = tree.position.z - camPos.z;
-        const distSq = dx * dx + dz * dz;
-
-        if (distSq < drawDistSq && visibleTrees < PERF_CONFIG.maxVisibleTrees) {
-          if (!tree.visible) tree.visible = true;
-          visibleTrees++;
-
-          // Reduce detail for distant trees
-          if (distSq > (drawDist * 0.6) * (drawDist * 0.6)) {
-            tree.traverse(function (child) {
-              if (child.castShadow) child.castShadow = false;
-            });
-          }
-        } else {
-          if (tree.visible) tree.visible = false;
-        }
-      }
-    }
-
-    // Cull rocks
-    if (forest.rocks && forest.rocks.length > 0) {
-      let visibleRocks = 0;
-
-      for (let i = 0; i < forest.rocks.length; i++) {
-        const rock = forest.rocks[i];
-        if (!rock) continue;
-
-        const dx = rock.position.x - camPos.x;
-        const dz = rock.position.z - camPos.z;
-        const distSq = dx * dx + dz * dz;
-
-        if (distSq < drawDistSq && visibleRocks < PERF_CONFIG.maxVisibleRocks) {
-          if (!rock.visible) rock.visible = true;
-          visibleRocks++;
-          rock.castShadow = PERF_CONFIG.smallObjectShadows;
-        } else {
-          if (rock.visible) rock.visible = false;
-        }
-      }
-    }
-
-    // Cull fog particles
-    if (forest.fogParticles && forest.fogParticles.length > 0) {
-      let visibleFog = 0;
-
-      for (let i = 0; i < forest.fogParticles.length; i++) {
-        const fog = forest.fogParticles[i];
-        if (!fog) continue;
-
-        const dx = fog.position.x - camPos.x;
-        const dz = fog.position.z - camPos.z;
-        const distSq = dx * dx + dz * dz;
-
-        if (distSq < drawDistSq * 0.5 && visibleFog < PERF_CONFIG.maxVisibleFog) {
-          if (!fog.visible) fog.visible = true;
-          visibleFog++;
-        } else {
-          if (fog.visible) fog.visible = false;
-        }
-      }
-    }
-
-    // Cull item meshes
-    if (forest.itemMeshes) {
-      forest.itemMeshes.forEach(function (mesh) {
-        const dx = mesh.position.x - camPos.x;
-        const dz = mesh.position.z - camPos.z;
-        const distSq = dx * dx + dz * dz;
-
-        mesh.visible = distSq < drawDistSq;
-
-        // Disable item lights when far
-        mesh.children.forEach(function (child) {
-          if (child.isPointLight) {
-            child.visible = distSq < (drawDist * 0.3) * (drawDist * 0.3);
+      for (var i = trees.length - 1; i >= keep; i--) {
+        scene.remove(trees[i]);
+        trees[i].traverse(function (child) {
+          if (child.geometry) child.geometry.dispose();
+          if (child.material) {
+            if (child.material.map) child.material.map.dispose();
+            child.material.dispose();
           }
         });
-      });
+        removeCount++;
+      }
+
+      g.forest.trees = trees.slice(0, keep);
+      console.log('🌲 Removed ' + removeCount + ' trees. Keeping ' + keep);
     }
 
-    // Update shadow map occasionally
-    if (window.game.renderer && window.game.renderer.shadowMap) {
-      window.game.renderer.shadowMap.needsUpdate = true;
+    // ==============================
+    // 4. REMOVE 70% OF ROCKS
+    // ==============================
+    if (g.forest && g.forest.rocks) {
+      var rocks = g.forest.rocks;
+      var keepRocks = Math.min(rocks.length, 30);
+
+      for (var i = rocks.length - 1; i >= keepRocks; i--) {
+        scene.remove(rocks[i]);
+        rocks[i].traverse(function (child) {
+          if (child.geometry) child.geometry.dispose();
+          if (child.material) child.material.dispose();
+        });
+      }
+
+      g.forest.rocks = rocks.slice(0, keepRocks);
+      console.log('🪨 Removed rocks. Keeping ' + keepRocks);
     }
-  }
 
-  // ==========================================
-  // Optimize lights
-  // ==========================================
-  function optimizeLights(scene, camera) {
-    if (!scene || !camera) return;
-
-    const camPos = camera.position;
-    let activeLights = 0;
-    const maxLights = PERF_CONFIG.maxActiveLights;
-    const lightDistSq = (PERF_CONFIG.drawDistance * 0.5) * (PERF_CONFIG.drawDistance * 0.5);
-
-    scene.traverse(function (obj) {
-      if (obj.isPointLight || obj.isSpotLight) {
-        // Skip the main sun/moon light
-        if (obj.isDirectionalLight) return;
-
-        const dx = obj.position.x - camPos.x;
-        const dy = obj.position.y - camPos.y;
-        const dz = obj.position.z - camPos.z;
-
-        // Use world position if it's a child
-        let worldPos = obj.position;
-        if (obj.parent && obj.parent !== scene) {
-          worldPos = new THREE.Vector3();
-          obj.getWorldPosition(worldPos);
-          const wdx = worldPos.x - camPos.x;
-          const wdz = worldPos.z - camPos.z;
-
-          if (wdx * wdx + wdz * wdz > lightDistSq || activeLights >= maxLights) {
-            obj.visible = false;
-          } else {
-            obj.visible = true;
-            activeLights++;
-          }
-        } else {
-          const distSq = dx * dx + dz * dz;
-          if (distSq > lightDistSq || activeLights >= maxLights) {
-            obj.visible = false;
-          } else {
-            obj.visible = true;
-            activeLights++;
-          }
-        }
-      }
-    });
-  }
-
-  // ==========================================
-  // Optimize shadows
-  // ==========================================
-  function optimizeShadows(scene) {
-    if (!scene) return;
-
-    scene.traverse(function (obj) {
-      if (obj.isMesh) {
-        // Disable shadows on very small objects
-        if (!PERF_CONFIG.smallObjectShadows) {
-          if (obj.geometry) {
-            const size = obj.geometry.boundingSphere;
-            if (size && size.radius < 0.5) {
-              obj.castShadow = false;
-            }
-          }
-        }
-      }
-
-      // Reduce shadow map on directional light
-      if (obj.isDirectionalLight && obj.shadow) {
-        if (obj.shadow.mapSize.width !== PERF_CONFIG.shadowMapSize) {
-          obj.shadow.mapSize.width = PERF_CONFIG.shadowMapSize;
-          obj.shadow.mapSize.height = PERF_CONFIG.shadowMapSize;
-
-          if (obj.shadow.map) {
-            obj.shadow.map.dispose();
-            obj.shadow.map = null;
-          }
-        }
-
-        // Reduce shadow camera range
-        obj.shadow.camera.far = PERF_CONFIG.drawDistance;
-        const halfDist = PERF_CONFIG.drawDistance * 0.5;
-        obj.shadow.camera.left = -halfDist;
-        obj.shadow.camera.right = halfDist;
-        obj.shadow.camera.top = halfDist;
-        obj.shadow.camera.bottom = -halfDist;
-      }
-    });
-  }
-
-  // ==========================================
-  // Optimize weather (rain particles)
-  // ==========================================
-  function optimizeWeather() {
-    if (!window.game || !window.game.weatherSystem) return;
-
-    const ws = window.game.weatherSystem;
-
-    if (ws.rainParticles && ws.rainParticles.geometry) {
-      // Reduce visible rain in low quality
-      if (qualityLevel === 'low') {
-        ws.rainParticles.material.size = 0.05;
-        // Only update every other frame
-        ws.rainParticles.frustumCulled = true;
-      }
+    // ==============================
+    // 5. REMOVE ALL FOG PARTICLES
+    // ==============================
+    if (g.forest && g.forest.fogParticles) {
+      g.forest.fogParticles.forEach(function (fog) {
+        scene.remove(fog);
+        if (fog.geometry) fog.geometry.dispose();
+        if (fog.material) fog.material.dispose();
+      });
+      g.forest.fogParticles = [];
+      console.log('🌫️ Removed all fog particles');
     }
-  }
 
-  // ==========================================
-  // Optimize monsters
-  // ==========================================
-  function optimizeMonsters(camera) {
-    if (!window.game || !window.game.monsterManager) return;
-
-    const camPos = camera.position;
-    const maxDist = PERF_CONFIG.drawDistance;
-    const maxDistSq = maxDist * maxDist;
-
-    window.game.monsterManager.monsters.forEach(function (monster) {
-      if (!monster.group) return;
-
-      const dx = monster.group.position.x - camPos.x;
-      const dz = monster.group.position.z - camPos.z;
-      const distSq = dx * dx + dz * dz;
-
-      monster.group.visible = distSq < maxDistSq;
-
-      // Disable monster lights when far
-      monster.group.children.forEach(function (child) {
-        if (child.isPointLight) {
-          child.visible = distSq < (maxDist * 0.4) * (maxDist * 0.4);
-        }
-      });
-    });
-  }
-
-  // ==========================================
-  // Optimize buildings
-  // ==========================================
-  function optimizeBuildings(camera) {
-    if (!window.game || !window.game.buildSystem) return;
-
-    const camPos = camera.position;
-    const maxDistSq = PERF_CONFIG.drawDistance * PERF_CONFIG.drawDistance;
-
-    window.game.buildSystem.buildings.forEach(function (mesh) {
-      const dx = mesh.position.x - camPos.x;
-      const dz = mesh.position.z - camPos.z;
-      const distSq = dx * dx + dz * dz;
-
-      mesh.visible = distSq < maxDistSq;
-
-      mesh.children.forEach(function (child) {
-        if (child.isPointLight) {
-          child.visible = distSq < (PERF_CONFIG.drawDistance * 0.3) * (PERF_CONFIG.drawDistance * 0.3);
-        }
-      });
-    });
-  }
-
-  // ==========================================
-  // Optimize campfires
-  // ==========================================
-  function optimizeCampfires(camera) {
-    if (!window.game || !window.game.campfireManager) return;
-
-    const camPos = camera.position;
-    const maxDistSq = PERF_CONFIG.drawDistance * PERF_CONFIG.drawDistance;
-
-    window.game.campfireManager.campfires.forEach(function (cf) {
-      if (!cf.group) return;
-
-      const dx = cf.group.position.x - camPos.x;
-      const dz = cf.group.position.z - camPos.z;
-      const distSq = dx * dx + dz * dz;
-
-      cf.group.visible = distSq < maxDistSq;
-
-      // Disable fire light when far
-      if (cf.fireLight) {
-        cf.fireLight.visible = distSq < (PERF_CONFIG.drawDistance * 0.4) * (PERF_CONFIG.drawDistance * 0.4);
-      }
-
-      // Hide fire particles when far
-      cf.fireParticles.forEach(function (p) {
-        p.visible = distSq < (PERF_CONFIG.drawDistance * 0.3) * (PERF_CONFIG.drawDistance * 0.3);
-      });
-    });
-  }
-
-  // ==========================================
-  // Reduce geometry on scene load
-  // ==========================================
-  function reduceGeometry(scene) {
-    if (!scene) return;
-
-    let meshCount = 0;
-    let lightCount = 0;
-
-    scene.traverse(function (obj) {
-      if (obj.isMesh) {
-        meshCount++;
-
-        // Enable frustum culling on all meshes
-        obj.frustumCulled = true;
-
-        // Disable matrix auto update for static objects
-        if (obj.userData && !obj.userData.dynamic) {
-          obj.matrixAutoUpdate = false;
-          obj.updateMatrix();
-        }
-      }
-
-      if (obj.isLight) lightCount++;
-    });
-
-    console.log(`🎮 Scene: ${meshCount} meshes, ${lightCount} lights`);
-  }
-
-  // ==========================================
-  // Optimize the render loop
-  // ==========================================
-  function patchRenderLoop() {
-    if (!window.game) return;
-
-    // Store original animate
-    const originalAnimate = window.game.animate.bind(window.game);
-
-    // Optimization frame counter
-    let optimizeFrame = 0;
-
-    window.game.animate = function () {
-      if (!this.isRunning) return;
-
-      requestAnimationFrame(function () { window.game.animate(); });
-
-      // Measure FPS
-      measureFps();
-
-      const delta = Math.min(this.clock.getDelta(), 0.1);
-
-      // Run culling every few frames (not every frame)
-      optimizeFrame++;
-      if (optimizeFrame % 3 === 0) {
-        cullObjects(this.camera);
-        optimizeMonsters(this.camera);
-        optimizeCampfires(this.camera);
-        optimizeBuildings(this.camera);
-      }
-
-      if (optimizeFrame % 10 === 0) {
-        optimizeLights(this.scene, this.camera);
-      }
-
-      // Run normal game logic
-      if (this.localPlayer && this.localPlayer.isAlive) {
-        this.localPlayer.updateLocal(this.controls, delta, this.forest);
-
-        const now = Date.now();
-        if (now - this.lastMovementUpdate > PERF_CONFIG.networkSendRate) {
-          this.networkManager.sendMovement(
-            this.localPlayer.getPosition(),
-            { y: this.controls.getYaw() },
-            this.localPlayer.animationState,
-            this.controls.isRunning
-          );
-          this.lastMovementUpdate = now;
-        }
-
-        if (this.controls.isRunning && this.playerData && this.playerData.stamina <= 0) {
-          this.controls.isRunning = false;
-        }
-
-        if (this.localPlayer.animationState !== 'idle') {
-          this.footstepTimer += delta;
-          var interval = this.localPlayer.animationState === 'running' ? 0.3 : 0.5;
-          if (this.footstepTimer >= interval) {
-            this.audioManager.playFootstep();
-            this.footstepTimer = 0;
+    // ==============================
+    // 6. REMOVE ITEM LIGHTS
+    // ==============================
+    if (g.forest && g.forest.itemMeshes) {
+      g.forest.itemMeshes.forEach(function (mesh) {
+        var toRemove = [];
+        mesh.children.forEach(function (child) {
+          if (child.isPointLight) toRemove.push(child);
+          if (child.isMesh && child.geometry &&
+              child.geometry.type === 'SphereGeometry' &&
+              child.material && child.material.transparent) {
+            toRemove.push(child);
           }
-        }
+        });
+        toRemove.forEach(function (child) { mesh.remove(child); });
+      });
+      console.log('💡 Removed item lights and glows');
+    }
 
-        var pos = this.localPlayer.getPosition();
-        var nearbyItem = this.forest.getNearbyItem(pos, 4);
-        if (nearbyItem) {
-          this.uiManager.showInteraction('pick up ' + nearbyItem.name);
-        } else {
-          this.uiManager.hideInteraction();
-        }
+    // ==============================
+    // 7. REDUCE STARS
+    // ==============================
+    if (g.dayNightCycle && g.dayNightCycle.stars) {
+      scene.remove(g.dayNightCycle.stars);
+      if (g.dayNightCycle.stars.geometry) g.dayNightCycle.stars.geometry.dispose();
+      if (g.dayNightCycle.stars.material) g.dayNightCycle.stars.material.dispose();
+      g.dayNightCycle.stars = { material: { opacity: 0 } };
+      console.log('⭐ Removed stars');
+    }
 
-        this.damageCheckTimer += delta;
-        if (this.damageCheckTimer >= 1) {
-          this.damageCheckTimer = 0;
-          this.checkMonsterDamage();
-        }
+    // ==============================
+    // 8. DISABLE RAIN
+    // ==============================
+    if (g.weatherSystem && g.weatherSystem.rainParticles) {
+      scene.remove(g.weatherSystem.rainParticles);
+      if (g.weatherSystem.rainParticles.geometry) g.weatherSystem.rainParticles.geometry.dispose();
+      if (g.weatherSystem.rainParticles.material) g.weatherSystem.rainParticles.material.dispose();
 
-        // Update minimap less frequently
-        if (optimizeFrame % 5 === 0) {
-          var otherPlayersData = [];
-          this.remotePlayers.forEach(function (p) {
-            otherPlayersData.push({
-              position: p.group ? p.group.position : { x: 0, z: 0 },
-              isAlive: p.isAlive
-            });
+      g.weatherSystem.rainParticles = null;
+      g.weatherSystem.update = function () {};
+      g.weatherSystem.setWeather = function () {};
+
+      console.log('🌧️ Disabled rain');
+    }
+
+    // ==============================
+    // 9. SIMPLIFY FOG
+    // ==============================
+    if (scene.fog) {
+      scene.fog = new THREE.FogExp2(0x000000, 0.02);
+    }
+
+    // ==============================
+    // 10. REMOVE MONSTER LIGHTS
+    // ==============================
+    var origCreateMonster = null;
+    if (g.monsterManager) {
+      g.monsterManager.monsters.forEach(function (monster) {
+        var toRemove = [];
+        monster.group.children.forEach(function (child) {
+          if (child.isPointLight) toRemove.push(child);
+        });
+        toRemove.forEach(function (child) { monster.group.remove(child); });
+      });
+
+      // Patch future monster creation to skip lights
+      var origCreate = g.monsterManager.createMonster.bind(g.monsterManager);
+      g.monsterManager.createMonster = function (data) {
+        origCreate(data);
+        var monster = this.monsters.get(data.id);
+        if (monster) {
+          var rem = [];
+          monster.group.children.forEach(function (c) {
+            if (c.isPointLight) rem.push(c);
           });
-          this.minimap.update(pos, otherPlayersData, this.gameState.monsterPositions, this.forest.campfirePositions);
+          rem.forEach(function (c) { monster.group.remove(c); });
         }
-      }
+      };
 
-      // Update systems (skip some frames for performance)
-      if (optimizeFrame % 2 === 0) {
-        this.forest.update(delta, this.gameState.timeOfDay);
-      }
-      if (optimizeFrame % 3 === 0) {
-        this.weatherSystem.update(delta, this.camera.position);
-        this.campfireManager.update(delta);
-      }
+      console.log('👾 Removed monster lights');
+    }
 
-      // Render
-      this.renderer.render(this.scene, this.camera);
-    };
-  }
-
-  // ==========================================
-  // Add FPS counter and quality buttons to UI
-  // ==========================================
-  function addPerformanceUI() {
-    const container = document.createElement('div');
-    container.id = 'perf-ui';
-    container.style.cssText = 'position:fixed;bottom:5px;left:5px;z-index:999;font-size:11px;color:#888;pointer-events:auto;';
-
-    container.innerHTML =
-      '<div id="fps-counter" style="color:#00ff44;margin-bottom:3px;">FPS: --</div>' +
-      '<div style="display:flex;gap:3px;">' +
-      '<button onclick="setGameQuality(\'low\')" style="padding:2px 6px;background:#222;border:1px solid #444;color:#fff;cursor:pointer;font-size:10px;border-radius:2px;">LOW</button>' +
-      '<button onclick="setGameQuality(\'medium\')" style="padding:2px 6px;background:#222;border:1px solid #00ff44;color:#00ff44;cursor:pointer;font-size:10px;border-radius:2px;">MED</button>' +
-      '<button onclick="setGameQuality(\'high\')" style="padding:2px 6px;background:#222;border:1px solid #444;color:#fff;cursor:pointer;font-size:10px;border-radius:2px;">HIGH</button>' +
-      '</div>';
-
-    document.body.appendChild(container);
-
-    // Global function for buttons
-    window.setGameQuality = function (level) {
-      setQuality(level);
-
-      // Update button styles
-      var buttons = container.querySelectorAll('button');
-      buttons.forEach(function (btn) {
-        btn.style.borderColor = '#444';
-        btn.style.color = '#fff';
+    // ==============================
+    // 11. REMOVE CAMPFIRE LIGHTS WHEN FAR
+    // ==============================
+    if (g.campfireManager) {
+      g.campfireManager.campfires.forEach(function (cf) {
+        // Remove fire particles (just keep the light)
+        cf.fireParticles.forEach(function (p) {
+          cf.group.remove(p);
+          if (p.geometry) p.geometry.dispose();
+          if (p.material) p.material.dispose();
+        });
+        cf.fireParticles = [];
       });
-      var idx = level === 'low' ? 0 : level === 'medium' ? 1 : 2;
-      buttons[idx].style.borderColor = '#00ff44';
-      buttons[idx].style.color = '#00ff44';
-    };
-  }
+      console.log('🔥 Simplified campfires');
+    }
 
-  // ==========================================
-  // Main initialization
-  // ==========================================
-  function initPerformanceManager() {
-    console.log('🚀 Performance Manager loading...');
+    // ==============================
+    // 12. REDUCE SKY QUALITY
+    // ==============================
+    if (g.dayNightCycle && g.dayNightCycle.sky) {
+      var sky = g.dayNightCycle.sky;
+      scene.remove(sky);
+      if (sky.geometry) sky.geometry.dispose();
 
-    // Wait for game to be ready
-    var checkInterval = setInterval(function () {
-      if (window.game && window.game.isRunning && window.game.scene) {
-        clearInterval(checkInterval);
+      var newSkyGeo = new THREE.SphereGeometry(500, 8, 8);
+      sky.geometry = newSkyGeo;
+      scene.add(sky);
+      console.log('🌌 Reduced sky quality');
+    }
 
-        console.log('🚀 Performance Manager active!');
+    // ==============================
+    // 13. REDUCE DIRECTIONAL LIGHT SHADOW
+    // ==============================
+    if (g.dayNightCycle && g.dayNightCycle.sunLight) {
+      g.dayNightCycle.sunLight.castShadow = false;
+    }
 
-        // Apply initial optimizations
-        applyRendererSettings();
-        optimizeShadows(window.game.scene);
-        reduceGeometry(window.game.scene);
-        optimizeWeather();
-
-        // Patch the render loop
-        patchRenderLoop();
-
-        // Add UI
-        addPerformanceUI();
-
-        // Set default quality based on device
-        var isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
-        var isLowEnd = navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4;
-
-        if (isMobile) {
-          setQuality('low');
-          window.setGameQuality('low');
-        } else if (isLowEnd) {
-          setQuality('low');
-          window.setGameQuality('low');
-        } else {
-          setQuality('medium');
-        }
-
-        console.log('🎮 Device cores:', navigator.hardwareConcurrency || 'unknown');
-        console.log('🎮 Mobile:', isMobile);
-        console.log('🎮 Quality:', qualityLevel);
+    // ==============================
+    // 14. LIMIT COLLIDERS
+    // ==============================
+    if (g.forest && g.forest.colliders) {
+      if (g.forest.colliders.length > 200) {
+        g.forest.colliders = g.forest.colliders.slice(0, 200);
+        console.log('⚡ Reduced colliders to 200');
       }
-    }, 500);
+    }
+
+    // ==============================
+    // 15. THROTTLE FOREST UPDATE
+    // ==============================
+    if (g.forest) {
+      var origForestUpdate = g.forest.update.bind(g.forest);
+      var forestUpdateCounter = 0;
+
+      g.forest.update = function (delta, timeOfDay) {
+        forestUpdateCounter++;
+        if (forestUpdateCounter % 5 === 0) {
+          origForestUpdate(delta, timeOfDay);
+        }
+      };
+      console.log('🌲 Throttled forest updates');
+    }
+
+    // ==============================
+    // 16. THROTTLE CAMPFIRE UPDATE
+    // ==============================
+    if (g.campfireManager) {
+      var origCfUpdate = g.campfireManager.update.bind(g.campfireManager);
+      var cfCounter = 0;
+
+      g.campfireManager.update = function (delta) {
+        cfCounter++;
+        if (cfCounter % 10 === 0) {
+          origCfUpdate(delta);
+        }
+      };
+    }
+
+    // ==============================
+    // 17. THROTTLE MINIMAP
+    // ==============================
+    if (g.minimap) {
+      var origMinimap = g.minimap.update.bind(g.minimap);
+      var mmCounter = 0;
+
+      g.minimap.update = function () {
+        mmCounter++;
+        if (mmCounter % 10 === 0) {
+          origMinimap.apply(this, arguments);
+        }
+      };
+    }
+
+    // ==============================
+    // 18. REDUCE RENDER SIZE
+    // ==============================
+    var scale = 0.75;
+    var w = Math.floor(window.innerWidth * scale);
+    var h = Math.floor(window.innerHeight * scale);
+    renderer.setSize(w, h, false);
+    renderer.domElement.style.width = '100%';
+    renderer.domElement.style.height = '100%';
+
+    // Fix resize
+    var origResize = g.onResize.bind(g);
+    g.onResize = function () {
+      g.camera.aspect = window.innerWidth / window.innerHeight;
+      g.camera.updateProjectionMatrix();
+      var sw = Math.floor(window.innerWidth * scale);
+      var sh = Math.floor(window.innerHeight * scale);
+      renderer.setSize(sw, sh, false);
+      renderer.domElement.style.width = '100%';
+      renderer.domElement.style.height = '100%';
+    };
+
+    // ==============================
+    // 19. COUNT WHAT'S LEFT
+    // ==============================
+    var meshes = 0;
+    var lights = 0;
+    scene.traverse(function (obj) {
+      if (obj.isMesh) meshes++;
+      if (obj.isLight) lights++;
+    });
+
+    console.log('✅ PERFORMANCE FIX DONE');
+    console.log('📊 Scene now: ' + meshes + ' meshes, ' + lights + ' lights');
+
+    // ==============================
+    // 20. FPS COUNTER
+    // ==============================
+    var fpsDiv = document.createElement('div');
+    fpsDiv.id = 'fps-counter';
+    fpsDiv.style.cssText = 'position:fixed;bottom:5px;left:5px;z-index:9999;color:#00ff44;font-size:12px;font-family:monospace;background:rgba(0,0,0,0.5);padding:3px 8px;border-radius:3px;pointer-events:none;';
+    document.body.appendChild(fpsDiv);
+
+    var frames = 0;
+    var lastTime = performance.now();
+
+    function countFps() {
+      frames++;
+      var now = performance.now();
+      if (now - lastTime >= 1000) {
+        fpsDiv.textContent = 'FPS: ' + frames;
+        fpsDiv.style.color = frames > 40 ? '#00ff44' : frames > 25 ? '#ffaa00' : '#ff4444';
+        frames = 0;
+        lastTime = now;
+      }
+      requestAnimationFrame(countFps);
+    }
+    countFps();
   }
 
-  // ==========================================
-  // Start when page loads
-  // ==========================================
-  if (document.readyState === 'complete') {
-    initPerformanceManager();
-  } else {
-    window.addEventListener('load', initPerformanceManager);
-  }
+  // ==============================
+  // WAIT FOR GAME THEN FIX
+  // ==============================
+  var attempts = 0;
+  var checker = setInterval(function () {
+    attempts++;
+    if (attempts > 120) {
+      clearInterval(checker);
+      return;
+    }
+
+    if (window.game && window.game.isRunning && window.game.scene && window.game.forest && window.game.forest.trees && window.game.forest.trees.length > 0) {
+      clearInterval(checker);
+
+      // Wait a bit more for everything to load
+      setTimeout(fix, 2000);
+    }
+  }, 500);
 
 })();
