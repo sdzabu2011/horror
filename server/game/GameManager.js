@@ -1,7 +1,7 @@
 class GameManager {
   constructor() {
-    this.timeOfDay = 0.25; // Start at morning (0-1, 0.5 = noon, 0 = midnight)
-    this.dayDuration = 120; // 2 minutes per day cycle
+    this.timeOfDay = 0.25;
+    this.dayDuration = 420; // 7 MINUTES per full day/night cycle
     this.currentNight = 1;
     this.isNight = false;
     this.weather = 'clear';
@@ -17,24 +17,20 @@ class GameManager {
     const delta = (now - this.lastUpdate) / 1000;
     this.lastUpdate = now;
 
-    // Update time of day
     this.timeOfDay += delta / this.dayDuration;
     if (this.timeOfDay >= 1) {
       this.timeOfDay -= 1;
       this.currentNight++;
     }
 
-    // Determine if night (night is from 0.75 to 0.25)
     this.isNight = this.timeOfDay > 0.75 || this.timeOfDay < 0.25;
 
-    // Update weather
     this.weatherTimer -= delta;
     if (this.weatherTimer <= 0) {
       this.updateWeather();
-      this.weatherTimer = 30 + Math.random() * 60; // Change every 30-90 seconds
+      this.weatherTimer = 30 + Math.random() * 60;
     }
 
-    // Update monsters
     this.updateMonsters(delta, activePlayers, worldManager);
 
     return {
@@ -53,7 +49,6 @@ class GameManager {
 
   updateWeather() {
     const weathers = ['clear', 'clear', 'clear', 'foggy', 'rainy', 'stormy'];
-    // More intense weather at higher nights
     if (this.currentNight > 5) {
       weathers.push('stormy', 'foggy');
     }
@@ -61,21 +56,17 @@ class GameManager {
   }
 
   updateMonsters(delta, activePlayers, worldManager) {
-    // Spawn monsters at night
     if (this.isNight) {
       this.monsterSpawnTimer -= delta;
       if (this.monsterSpawnTimer <= 0 && this.monsters.length < this.maxMonsters + this.currentNight) {
         this.spawnMonster(worldManager);
-        this.monsterSpawnTimer = 10 - Math.min(this.currentNight, 8); // Faster spawns on later nights
+        this.monsterSpawnTimer = 10 - Math.min(this.currentNight, 8);
       }
     } else {
-      // Remove monsters during day
       this.monsters = this.monsters.filter(m => m.type === 'shadow');
     }
 
-    // Update monster AI
     const playerArray = Array.from(activePlayers.values()).filter(p => p.isAlive);
-
     this.monsters.forEach(monster => {
       this.updateMonsterAI(monster, playerArray, delta);
     });
@@ -84,7 +75,6 @@ class GameManager {
   spawnMonster(worldManager) {
     const types = ['wendigo', 'shadow', 'crawler', 'ghost'];
     const type = types[Math.floor(Math.random() * types.length)];
-
     const angle = Math.random() * Math.PI * 2;
     const distance = 80 + Math.random() * 40;
 
@@ -112,53 +102,27 @@ class GameManager {
   }
 
   getMonsterSpeed(type) {
-    const speeds = {
-      wendigo: 6,
-      shadow: 4,
-      crawler: 8,
-      ghost: 3
-    };
-    return speeds[type] || 5;
+    return { wendigo: 6, shadow: 4, crawler: 8, ghost: 3 }[type] || 5;
   }
 
   getMonsterHealth(type) {
-    const health = {
-      wendigo: 150,
-      shadow: 80,
-      crawler: 60,
-      ghost: 200
-    };
-    return health[type] || 100;
+    return { wendigo: 150, shadow: 80, crawler: 60, ghost: 200 }[type] || 100;
   }
 
   getMonsterDamage(type) {
-    const damage = {
-      wendigo: 25,
-      shadow: 15,
-      crawler: 20,
-      ghost: 10
-    };
-    return damage[type] || 15;
+    return { wendigo: 25, shadow: 15, crawler: 20, ghost: 10 }[type] || 15;
   }
 
   getMonsterDetection(type) {
-    const detection = {
-      wendigo: 30,
-      shadow: 20,
-      crawler: 25,
-      ghost: 40
-    };
-    return detection[type] || 25;
+    return { wendigo: 30, shadow: 20, crawler: 25, ghost: 40 }[type] || 25;
   }
 
   updateMonsterAI(monster, players, delta) {
     if (players.length === 0) {
-      // Wander randomly
       this.monsterWander(monster, delta);
       return;
     }
 
-    // Find nearest player
     let nearestPlayer = null;
     let nearestDist = Infinity;
 
@@ -167,14 +131,9 @@ class GameManager {
       const dz = player.position.z - monster.position.z;
       const dist = Math.sqrt(dx * dx + dz * dz);
 
-      // Flashlight affects detection for some monsters
       let detectionMod = 1;
-      if (player.flashlightOn && monster.type === 'shadow') {
-        detectionMod = 0.5; // Shadows avoid light
-      }
-      if (player.flashlightOn && monster.type === 'crawler') {
-        detectionMod = 1.5; // Crawlers attracted to light
-      }
+      if (player.flashlightOn && monster.type === 'shadow') detectionMod = 0.5;
+      if (player.flashlightOn && monster.type === 'crawler') detectionMod = 1.5;
 
       if (dist < nearestDist && dist < monster.detectionRange * detectionMod) {
         nearestDist = dist;
@@ -186,7 +145,6 @@ class GameManager {
       monster.state = 'chasing';
       monster.targetPlayer = nearestPlayer.id;
 
-      // Move toward player
       const dx = nearestPlayer.position.x - monster.position.x;
       const dz = nearestPlayer.position.z - monster.position.z;
       const dist = Math.sqrt(dx * dx + dz * dz);
@@ -200,11 +158,10 @@ class GameManager {
         monster.state = 'attacking';
       }
 
-      // Shadow special: teleport
       if (monster.type === 'shadow' && Math.random() < 0.002) {
-        const angle = Math.random() * Math.PI * 2;
-        monster.position.x = nearestPlayer.position.x + Math.cos(angle) * 15;
-        monster.position.z = nearestPlayer.position.z + Math.sin(angle) * 15;
+        const a = Math.random() * Math.PI * 2;
+        monster.position.x = nearestPlayer.position.x + Math.cos(a) * 15;
+        monster.position.z = nearestPlayer.position.z + Math.sin(a) * 15;
       }
     } else {
       monster.state = 'wandering';
@@ -212,10 +169,7 @@ class GameManager {
       this.monsterWander(monster, delta);
     }
 
-    // Update attack cooldown
-    if (monster.attackCooldown > 0) {
-      monster.attackCooldown -= delta;
-    }
+    if (monster.attackCooldown > 0) monster.attackCooldown -= delta;
   }
 
   monsterWander(monster, delta) {
@@ -224,7 +178,6 @@ class GameManager {
     monster.position.x += Math.cos(monster.wanderAngle) * speed;
     monster.position.z += Math.sin(monster.wanderAngle) * speed;
 
-    // Keep in bounds
     const maxDist = 120;
     const dist = Math.sqrt(monster.position.x ** 2 + monster.position.z ** 2);
     if (dist > maxDist) {
@@ -266,8 +219,14 @@ class GameManager {
         result.consumed = true;
         result.effect = 'battery_charged';
         break;
-      default:
-        result.effect = 'unknown';
+      case 'wood':
+        result.consumed = true;
+        result.effect = 'wood_used';
+        break;
+      case 'key':
+        result.consumed = false;
+        result.effect = 'key_kept';
+        break;
     }
 
     return result;

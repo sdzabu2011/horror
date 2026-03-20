@@ -26,9 +26,9 @@
       </div>
 
       <div class="game-info">
-        <p>🎮 WASD - Move | SHIFT - Run | F - Flashlight</p>
-        <p>🖱️ Mouse - Look Around | E - Interact | T - Chat</p>
-        <p>👻 Survive 99 nights in the haunted forest...</p>
+        <p>🎮 Multiplayer Horror Survival</p>
+        <p>👻 Survive 99 nights in the haunted forest</p>
+        <p>💡 Open 2 browser tabs to test multiplayer!</p>
       </div>
 
       <div class="online-count">
@@ -50,6 +50,69 @@
 
   <!-- Game HUD -->
   <div id="game-hud" style="display:none;">
+
+    <!-- TUTORIAL PANEL (top-left) -->
+    <div class="tutorial-panel" id="tutorial-panel">
+      <div class="tutorial-header" onclick="toggleTutorial()">
+        📖 GUIDE <span id="tutorial-toggle">▼</span>
+      </div>
+      <div class="tutorial-content" id="tutorial-content">
+        <div class="tutorial-section">
+          <h4>🎮 CONTROLS</h4>
+          <div class="tutorial-item">
+            <span class="tkey">W A S D</span> Move around
+          </div>
+          <div class="tutorial-item">
+            <span class="tkey">MOUSE</span> Look around
+          </div>
+          <div class="tutorial-item">
+            <span class="tkey">SHIFT</span> Run (uses stamina)
+          </div>
+          <div class="tutorial-item">
+            <span class="tkey">SPACE</span> Jump
+          </div>
+          <div class="tutorial-item">
+            <span class="tkey">F</span> Toggle flashlight
+          </div>
+          <div class="tutorial-item">
+            <span class="tkey">E</span> Pick up items
+          </div>
+          <div class="tutorial-item">
+            <span class="tkey">Q</span> Use selected item
+          </div>
+          <div class="tutorial-item">
+            <span class="tkey">1-8</span> Select inventory slot
+          </div>
+          <div class="tutorial-item">
+            <span class="tkey">T</span> Open chat
+          </div>
+          <div class="tutorial-item">
+            <span class="tkey">H</span> Hide/Show this guide
+          </div>
+        </div>
+        <div class="tutorial-section">
+          <h4>📦 ITEMS</h4>
+          <div class="tutorial-item">🩹 <b>Medkit</b> — Heals +40 HP</div>
+          <div class="tutorial-item">🥫 <b>Food Can</b> — Hunger +30</div>
+          <div class="tutorial-item">⚡ <b>Energy Drink</b> — Stamina +50</div>
+          <div class="tutorial-item">💊 <b>Pills</b> — Sanity +35</div>
+          <div class="tutorial-item">🔥 <b>Flare</b> — Scares monsters</div>
+          <div class="tutorial-item">🔋 <b>Battery</b> — Flashlight power</div>
+          <div class="tutorial-item">🪵 <b>Wood</b> — Campfire fuel</div>
+          <div class="tutorial-item">🔑 <b>Key</b> — Unlock secrets</div>
+        </div>
+        <div class="tutorial-section">
+          <h4>💡 TIPS</h4>
+          <div class="tutorial-item">🔦 Shadows avoid your flashlight</div>
+          <div class="tutorial-item">🏕️ Stay near campfires for safety</div>
+          <div class="tutorial-item">🌙 Monsters come out at night</div>
+          <div class="tutorial-item">🧠 Low sanity = hallucinations</div>
+          <div class="tutorial-item">🍖 Eat food or starve to death</div>
+          <div class="tutorial-item">👥 Open 2 tabs for multiplayer!</div>
+        </div>
+      </div>
+    </div>
+
     <!-- Top bar -->
     <div class="hud-top">
       <div class="night-counter">
@@ -61,9 +124,12 @@
           <span id="time-icon">🌙</span>
         </div>
       </div>
-      <div class="weather-display" id="weather-display">
-        ☀️ Clear
-      </div>
+      <div class="weather-display" id="weather-display">☀️ Clear</div>
+    </div>
+
+    <!-- Connection status -->
+    <div class="connection-status" id="connection-status">
+      🟢 Connected
     </div>
 
     <!-- Stats bars -->
@@ -106,22 +172,23 @@
       <p>Press <span class="key">E</span> to <span id="interaction-text">interact</span></p>
     </div>
 
+    <!-- Item use feedback -->
+    <div class="item-feedback" id="item-feedback" style="display:none;"></div>
+
     <!-- Inventory -->
     <div class="inventory-bar" id="inventory-bar">
-      <div class="inv-slot" data-slot="0"></div>
-      <div class="inv-slot" data-slot="1"></div>
-      <div class="inv-slot" data-slot="2"></div>
-      <div class="inv-slot" data-slot="3"></div>
-      <div class="inv-slot" data-slot="4"></div>
-      <div class="inv-slot" data-slot="5"></div>
-      <div class="inv-slot" data-slot="6"></div>
-      <div class="inv-slot" data-slot="7"></div>
+      <div class="inv-slot active" data-slot="0"><span class="slot-num">1</span></div>
+      <div class="inv-slot" data-slot="1"><span class="slot-num">2</span></div>
+      <div class="inv-slot" data-slot="2"><span class="slot-num">3</span></div>
+      <div class="inv-slot" data-slot="3"><span class="slot-num">4</span></div>
+      <div class="inv-slot" data-slot="4"><span class="slot-num">5</span></div>
+      <div class="inv-slot" data-slot="5"><span class="slot-num">6</span></div>
+      <div class="inv-slot" data-slot="6"><span class="slot-num">7</span></div>
+      <div class="inv-slot" data-slot="7"><span class="slot-num">8</span></div>
     </div>
 
     <!-- Flashlight indicator -->
-    <div class="flashlight-indicator" id="flashlight-indicator">
-      🔦 OFF
-    </div>
+    <div class="flashlight-indicator" id="flashlight-indicator">🔦 OFF</div>
 
     <!-- Player list -->
     <div class="player-list" id="player-list">
@@ -165,7 +232,7 @@
     </div>
   </div>
 
-  <!-- Canvas container for Three.js -->
+  <!-- Canvas container -->
   <div id="game-container"></div>
 
   <!-- Scripts -->
@@ -188,5 +255,19 @@
   <script src="js/ui/Chat.js"></script>
   <script src="js/game/Game.js"></script>
   <script src="js/main.js"></script>
+
+  <script>
+    function toggleTutorial() {
+      const content = document.getElementById('tutorial-content');
+      const toggle = document.getElementById('tutorial-toggle');
+      if (content.style.display === 'none') {
+        content.style.display = 'block';
+        toggle.textContent = '▼';
+      } else {
+        content.style.display = 'none';
+        toggle.textContent = '▶';
+      }
+    }
+  </script>
 </body>
 </html>

@@ -48,10 +48,7 @@ body {
 .game-title h1 {
   font-size: 72px;
   color: #00ff44;
-  text-shadow:
-    0 0 10px #00ff44,
-    0 0 30px #00ff44,
-    0 0 60px #00ff44;
+  text-shadow: 0 0 10px #00ff44, 0 0 30px #00ff44, 0 0 60px #00ff44;
   letter-spacing: 8px;
   animation: titleGlow 2s ease-in-out infinite alternate;
 }
@@ -71,22 +68,11 @@ body {
 }
 
 @keyframes titleGlow {
-  from {
-    text-shadow:
-      0 0 10px #00ff44,
-      0 0 30px #00ff44;
-  }
-  to {
-    text-shadow:
-      0 0 20px #00ff44,
-      0 0 50px #00ff44,
-      0 0 80px #00ff44;
-  }
+  from { text-shadow: 0 0 10px #00ff44, 0 0 30px #00ff44; }
+  to { text-shadow: 0 0 20px #00ff44, 0 0 50px #00ff44, 0 0 80px #00ff44; }
 }
 
-.login-form {
-  margin-top: 40px;
-}
+.login-form { margin-top: 40px; }
 
 #username-input {
   width: 320px;
@@ -106,9 +92,7 @@ body {
   box-shadow: 0 0 20px rgba(0, 255, 68, 0.3);
 }
 
-#username-input::placeholder {
-  color: rgba(0, 255, 68, 0.4);
-}
+#username-input::placeholder { color: rgba(0, 255, 68, 0.4); }
 
 #play-btn {
   display: block;
@@ -165,9 +149,7 @@ body {
   align-items: center;
 }
 
-.loading-container {
-  text-align: center;
-}
+.loading-container { text-align: center; }
 
 .loading-container h2 {
   color: #00ff44;
@@ -208,8 +190,96 @@ body {
   pointer-events: none;
 }
 
-#game-hud * {
-  pointer-events: auto;
+#game-hud * { pointer-events: auto; }
+
+/* =================== TUTORIAL PANEL =================== */
+.tutorial-panel {
+  position: absolute;
+  top: 55px;
+  left: 10px;
+  width: 250px;
+  background: rgba(0, 0, 0, 0.85);
+  border: 1px solid rgba(0, 255, 68, 0.3);
+  border-radius: 8px;
+  z-index: 200;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #333 transparent;
+}
+
+.tutorial-panel::-webkit-scrollbar { width: 4px; }
+.tutorial-panel::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+.tutorial-header {
+  padding: 10px 15px;
+  background: rgba(0, 255, 68, 0.15);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  color: #00ff44;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 8px 8px 0 0;
+  user-select: none;
+}
+
+.tutorial-header:hover { background: rgba(0, 255, 68, 0.25); }
+
+.tutorial-content { padding: 5px 0; }
+
+.tutorial-section {
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.tutorial-section:last-child { border-bottom: none; }
+
+.tutorial-section h4 {
+  color: #00ff44;
+  font-size: 12px;
+  margin-bottom: 6px;
+  letter-spacing: 1px;
+}
+
+.tutorial-item {
+  font-size: 11px;
+  color: #aaa;
+  padding: 3px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tkey {
+  background: rgba(0, 255, 68, 0.2);
+  color: #00ff44;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: bold;
+  min-width: 35px;
+  text-align: center;
+  border: 1px solid rgba(0, 255, 68, 0.3);
+}
+
+/* =================== CONNECTION STATUS =================== */
+.connection-status {
+  position: absolute;
+  top: 55px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  padding: 3px 10px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 4px;
+  color: #00ff44;
+  pointer-events: none;
+}
+
+.connection-status.disconnected {
+  color: #ff4444;
 }
 
 /* Top bar */
@@ -239,7 +309,7 @@ body {
   height: 8px;
   background: #222;
   border-radius: 4px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .time-progress {
@@ -251,7 +321,7 @@ body {
 
 #time-icon {
   position: absolute;
-  top: -8px;
+  top: -10px;
   font-size: 20px;
   transform: translateX(-50%);
   transition: left 1s;
@@ -267,7 +337,7 @@ body {
 /* Stats bars */
 .hud-stats {
   position: absolute;
-  left: 20px;
+  left: 270px;
   top: 60px;
   width: 200px;
 }
@@ -278,10 +348,7 @@ body {
   margin-bottom: 8px;
 }
 
-.stat-icon {
-  width: 25px;
-  font-size: 14px;
-}
+.stat-icon { width: 25px; font-size: 14px; }
 
 .bar-container {
   flex: 1;
@@ -330,12 +397,18 @@ body {
   bottom: 200px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(0,0,0,0.7);
-  padding: 10px 20px;
+  background: rgba(0,0,0,0.8);
+  padding: 12px 24px;
   border-radius: 8px;
-  border: 1px solid #00ff44;
-  font-size: 14px;
+  border: 2px solid #00ff44;
+  font-size: 16px;
   pointer-events: none;
+  animation: promptPulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes promptPulse {
+  from { border-color: #00ff44; }
+  to { border-color: #00aa22; box-shadow: 0 0 15px rgba(0, 255, 68, 0.3); }
 }
 
 .interaction-prompt .key {
@@ -346,6 +419,29 @@ body {
   font-weight: bold;
 }
 
+/* Item use feedback */
+.item-feedback {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  padding: 10px 25px;
+  border-radius: 8px;
+  font-size: 18px;
+  color: #00ff44;
+  border: 1px solid #00ff44;
+  pointer-events: none;
+  animation: feedbackFade 2s ease-out forwards;
+}
+
+@keyframes feedbackFade {
+  0% { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  10% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+}
+
 /* Inventory */
 .inventory-bar {
   position: absolute;
@@ -354,24 +450,25 @@ body {
   transform: translateX(-50%);
   display: flex;
   gap: 5px;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0,0,0,0.7);
   padding: 8px;
   border-radius: 8px;
   border: 1px solid rgba(255,255,255,0.1);
 }
 
 .inv-slot {
-  width: 50px;
-  height: 50px;
+  width: 55px;
+  height: 55px;
   background: rgba(255,255,255,0.05);
   border: 2px solid rgba(255,255,255,0.15);
   border-radius: 6px;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 24px;
+  font-size: 26px;
   cursor: pointer;
   transition: all 0.2s;
+  position: relative;
 }
 
 .inv-slot:hover {
@@ -382,11 +479,40 @@ body {
 .inv-slot.active {
   border-color: #00ff44;
   box-shadow: 0 0 10px rgba(0, 255, 68, 0.3);
+  background: rgba(0, 255, 68, 0.05);
 }
 
-.inv-slot.has-item {
-  border-color: rgba(255,255,255,0.3);
+.inv-slot.has-item { border-color: rgba(255,255,255,0.3); }
+
+.slot-num {
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  font-size: 9px;
+  color: #555;
+  pointer-events: none;
 }
+
+.inv-slot.active .slot-num { color: #00ff44; }
+
+/* Item tooltip */
+.inv-slot .item-tooltip {
+  display: none;
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  white-space: nowrap;
+  border: 1px solid #00ff44;
+  color: #fff;
+  z-index: 300;
+}
+
+.inv-slot:hover .item-tooltip { display: block; }
 
 /* Flashlight indicator */
 .flashlight-indicator {
@@ -423,9 +549,7 @@ body {
   margin-bottom: 8px;
 }
 
-.player-list ul {
-  list-style: none;
-}
+.player-list ul { list-style: none; }
 
 .player-list li {
   font-size: 12px;
@@ -443,9 +567,7 @@ body {
   background: #00ff44;
 }
 
-.player-list li.dead .dot {
-  background: #ff0000;
-}
+.player-list li.dead .dot { background: #ff0000; }
 
 /* Chat */
 .chat-container {
@@ -456,7 +578,7 @@ body {
 }
 
 .chat-messages {
-  max-height: 200px;
+  max-height: 150px;
   overflow-y: auto;
   padding: 10px;
   background: rgba(0,0,0,0.4);
@@ -465,14 +587,8 @@ body {
   scrollbar-color: #333 transparent;
 }
 
-.chat-messages::-webkit-scrollbar {
-  width: 4px;
-}
-
-.chat-messages::-webkit-scrollbar-thumb {
-  background: #333;
-  border-radius: 2px;
-}
+.chat-messages::-webkit-scrollbar { width: 4px; }
+.chat-messages::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
 
 .chat-message {
   font-size: 13px;
@@ -481,15 +597,8 @@ body {
   opacity: 0.9;
 }
 
-.chat-message .username {
-  color: #00ff44;
-  font-weight: bold;
-}
-
-.chat-message .system {
-  color: #ffaa00;
-  font-style: italic;
-}
+.chat-message .username { color: #00ff44; font-weight: bold; }
+.chat-message .system { color: #ffaa00; font-style: italic; }
 
 .chat-input-container {
   background: rgba(0,0,0,0.7);
@@ -509,9 +618,7 @@ body {
   outline: none;
 }
 
-#chat-input:focus {
-  border-color: #00ff44;
-}
+#chat-input:focus { border-color: #00ff44; }
 
 /* Announcements */
 .announcements {
@@ -551,9 +658,7 @@ body {
   background: rgba(0,0,0,0.5);
 }
 
-#minimap-canvas {
-  border-radius: 50%;
-}
+#minimap-canvas { border-radius: 50%; }
 
 /* Score */
 .score-display {
@@ -582,16 +687,12 @@ body {
   align-items: center;
 }
 
-.death-container {
-  text-align: center;
-}
+.death-container { text-align: center; }
 
 .death-title {
   font-size: 80px;
   color: #ff0000;
-  text-shadow:
-    0 0 20px #ff0000,
-    0 0 40px #ff0000;
+  text-shadow: 0 0 20px #ff0000, 0 0 40px #ff0000;
   animation: deathPulse 1s ease-in-out infinite alternate;
 }
 
@@ -630,10 +731,7 @@ body {
   box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
 }
 
-/* Sanity effects */
-.sanity-low {
-  animation: sanityShake 0.1s infinite;
-}
+.sanity-low { animation: sanityShake 0.1s infinite; }
 
 @keyframes sanityShake {
   0% { transform: translate(1px, 1px); }
@@ -643,7 +741,6 @@ body {
   100% { transform: translate(1px, 1px); }
 }
 
-/* Vignette overlay */
 .vignette {
   position: fixed;
   top: 0;
@@ -655,7 +752,6 @@ body {
   background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.7) 100%);
 }
 
-/* Damage flash */
 .damage-flash {
   position: fixed;
   top: 0;
@@ -673,38 +769,15 @@ body {
   to { opacity: 0; }
 }
 
-/* Cursor */
-body.in-game {
-  cursor: none;
-}
+body.in-game { cursor: none; }
+body.in-menu { cursor: default; }
 
-body.in-menu {
-  cursor: default;
-}
-
-/* Responsive */
 @media (max-width: 768px) {
-  .game-title h1 {
-    font-size: 36px;
-  }
-
-  .game-title h2 {
-    font-size: 16px;
-  }
-
-  #username-input, #play-btn {
-    width: 260px;
-  }
-
-  .hud-stats {
-    width: 150px;
-  }
-
-  .chat-container {
-    width: 250px;
-  }
-
-  .player-list {
-    width: 130px;
-  }
+  .game-title h1 { font-size: 36px; }
+  .game-title h2 { font-size: 16px; }
+  #username-input, #play-btn { width: 260px; }
+  .tutorial-panel { width: 200px; }
+  .hud-stats { left: 220px; width: 150px; }
+  .chat-container { width: 250px; }
+  .player-list { width: 130px; }
 }
